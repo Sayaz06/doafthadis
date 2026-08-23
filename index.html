@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Istigfar Tasbih Kindle</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #fff;
+      color: #000;
+      font-family: Georgia, "Times New Roman", serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      padding: 4px 6px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── LOGIN ── */
+    #screen-login { padding: 30px 12px; }
+    #screen-login h1 { font-size: 1.2rem; text-align: center; margin-bottom: 18px; }
+    .pin-input {
+      display: block; width: 100%; padding: 10px 8px; font-size: 1.2rem;
+      border: 2px solid #000; border-radius: 6px; text-align: center;
+      margin-bottom: 8px; background: #fff; color: #000;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: block; width: 100%; padding: 11px 8px; margin: 4px 0;
+      font-size: 1.05rem; font-weight: bold; text-align: center;
+      border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 6px;
+    }
+    .btn:active { background: #000; color: #fff; }
+    .btn-primary { background: #000; color: #fff; }
+    .btn-primary:active { background: #333; }
+    .btn-danger { border-color: #c00; color: #c00; }
+    .btn-danger:active { background: #c00; color: #fff; }
+
+    /* ── MSG ── */
+    .msg { font-size: 0.78rem; text-align: center; margin: 4px 0; min-height: 16px; }
+    .error { color: #c00; }
+    .ok { color: #006600; }
+
+    /* ── MENU ── */
+    #screen-menu { padding: 8px 4px; }
+    #screen-menu h1 { font-size: 1.1rem; text-align: center; margin: 6px 0 10px; }
+    .mode-label {
+      font-size: 0.72rem; text-align: center; color: #555; margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    /* ── TASBIH SCREEN ── */
+    #screen-tasbih { padding: 6px 4px; }
+
+    /* Status bar atas */
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.72rem; color: #555; border-bottom: 1px solid #ccc;
+      padding-bottom: 4px; margin-bottom: 8px;
+    }
+    .status-bar .mode-tag {
+      font-weight: bold; font-size: 0.75rem; color: #000;
+      border: 1px solid #000; padding: 1px 5px; border-radius: 4px;
+    }
+
+    /* Kiraan besar */
+    .count-display {
+      text-align: center; margin: 10px 0 6px;
+    }
+    .count-number {
+      font-size: 3.8rem; font-weight: bold; line-height: 1;
+      letter-spacing: -2px;
+    }
+    .count-done {
+      font-size: 0.85rem; color: #555; margin-top: 2px;
+    }
+    .progress-bar-wrap {
+      width: 100%; height: 8px; background: #e0e0e0;
+      border-radius: 4px; overflow: hidden; margin: 6px 0;
+    }
+    .progress-bar-fill {
+      height: 100%; background: #000; border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Laci semasa (doa/hadis mode) */
+    .laci-box {
+      border: 2px solid #000; border-radius: 6px;
+      padding: 8px 10px; margin: 8px 0; min-height: 60px;
+    }
+    .laci-title {
+      font-size: 0.78rem; font-weight: bold; color: #555;
+      margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .laci-zikir {
+      font-size: 1.05rem; font-weight: bold; line-height: 1.35;
+    }
+    .laci-maksud {
+      font-size: 0.82rem; color: #333; margin-top: 4px;
+      line-height: 1.3; font-style: italic;
+    }
+    .laci-target {
+      font-size: 0.75rem; color: #666; margin-top: 3px;
+    }
+
+    /* Butang TAP */
+    #btn-tap {
+      display: block; width: 100%;
+      padding: 22px 8px; margin: 10px 0 6px;
+      font-size: 1.4rem; font-weight: bold; text-align: center;
+      border: 3px solid #000; background: #000; color: #fff;
+      cursor: pointer; border-radius: 8px;
+      letter-spacing: 1px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    #btn-tap:active { background: #333; }
+    #btn-tap.done-state { background: #fff; color: #000; border-style: dashed; }
+
+    /* Row butang kecil bawah */
+    .btn-row-sm {
+      display: flex; gap: 4px; margin: 4px 0;
+    }
+    .btn-row-sm .bsm {
+      flex: 1; padding: 9px 2px; font-size: 0.78rem; font-weight: bold;
+      text-align: center; border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 5px;
+    }
+    .btn-row-sm .bsm:active { background: #000; color: #fff; }
+    .btn-row-sm .bsm.on { background: #000; color: #fff; }
+
+    /* Navigasi laci doa/hadis */
+    .laci-nav {
+      display: flex; gap: 4px; margin: 6px 0;
+    }
+    .laci-nav button {
+      flex: 1; padding: 10px 4px; font-size: 0.85rem; font-weight: bold;
+      text-align: center; border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 5px;
+    }
+    .laci-nav button:active { background: #000; color: #fff; }
+    .laci-counter {
+      text-align: center; font-size: 0.75rem; color: #555; margin: 2px 0 4px;
+    }
+
+    /* Connected indicator */
+    .conn-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: #ccc; margin-right: 4px;
+      vertical-align: middle;
+    }
+    .conn-dot.live { background: #00aa00; }
+    .conn-dot.err  { background: #cc0000; }
+
+    /* Doa/Hadis pilih kategori */
+    .kat-list { margin: 6px 0; }
+    .kat-item {
+      padding: 9px 8px; margin: 3px 0; border: 2px solid #000;
+      border-radius: 5px; cursor: pointer; font-size: 0.9rem;
+    }
+    .kat-item:active { background: #000; color: #fff; }
+    .kat-item.aktif { background: #000; color: #fff; }
+    .kat-sub { font-size: 0.72rem; color: #666; margin-top: 1px; }
+    .kat-item.aktif .kat-sub { color: #ccc; }
+
+    /* ── SCREEN PILIH KAT ── */
+    #screen-kat { padding: 8px 4px; }
+    #screen-kat h1 { font-size: 1rem; text-align: center; margin: 6px 0 8px; }
+
+    /* Sync badge */
+    #sync-badge {
+      position: fixed; bottom: 6px; right: 8px;
+      font-size: 0.65rem; color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════ LOGIN ══════════ -->
+  <div id="screen-login" class="screen active">
+    <h1>📿 Tasbih Kindle</h1>
+    <input id="pin-input" class="pin-input" type="password"
+           inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+    <button id="btn-login" class="btn btn-primary">Masuk</button>
+    <div id="login-err" class="msg error"></div>
+  </div>
+
+  <!-- ══════════ MENU ══════════ -->
+  <div id="screen-menu" class="screen">
+    <h1>📿 Tasbih Kindle</h1>
+    <div class="mode-label" id="menu-user-label"></div>
+
+    <button id="btn-menu-tasbih" class="btn btn-primary">🔢 Countdown Tasbih</button>
+    <button id="btn-menu-doa"    class="btn">🤲 Doa</button>
+    <button id="btn-menu-hadis"  class="btn">📚 Hadis</button>
+
+    <div style="margin-top:10px;">
+      <button id="btn-logout" class="btn btn-danger">Log Keluar</button>
+    </div>
+    <div id="menu-err" class="msg error"></div>
+  </div>
+
+  <!-- ══════════ PILIH KATEGORI ══════════ -->
+  <div id="screen-kat" class="screen">
+    <h1 id="kat-title">Pilih Kategori</h1>
+    <div id="kat-list" class="kat-list"></div>
+    <button id="btn-kat-back" class="btn" style="margin-top:8px;">← Balik</button>
+  </div>
+
+  <!-- ══════════ TASBIH SCREEN ══════════ -->
+  <div id="screen-tasbih" class="screen">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span><span class="conn-dot" id="conn-dot"></span><span id="conn-label">Menyambung...</span></span>
+      <span class="mode-tag" id="mode-tag">TASBIH</span>
+      <span id="status-time"></span>
+    </div>
+
+    <!-- Kiraan -->
+    <div class="count-display">
+      <div class="count-number" id="count-number">—</div>
+      <div class="count-done"   id="count-done"></div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+
+    <!-- Laci doa/hadis (tersembunyi untuk mode tasbih biasa) -->
+    <div class="laci-box" id="laci-box" style="display:none;">
+      <div class="laci-title" id="laci-cat"></div>
+      <div class="laci-zikir" id="laci-zikir"></div>
+      <div class="laci-maksud" id="laci-maksud"></div>
+      <div class="laci-target" id="laci-target"></div>
+    </div>
+
+    <!-- Navigasi laci (doa/hadis sahaja) -->
+    <div class="laci-nav" id="laci-nav" style="display:none;">
+      <button id="btn-prev-laci">← Sebelum</button>
+      <button id="btn-next-laci">Seterusnya →</button>
+    </div>
+    <div class="laci-counter" id="laci-counter"></div>
+
+    <!-- TAP button -->
+    <button id="btn-tap">TAP — ISTIGFAR</button>
+
+    <!-- Butang bawah -->
+    <div class="btn-row-sm">
+      <button class="bsm" id="btn-back-tasbih">← Menu</button>
+      <button class="bsm" id="btn-refresh">🔄 Refresh</button>
+      <button class="bsm" id="btn-reset-confirm">Reset</button>
+    </div>
+
+    <div id="tasbih-err" class="msg error"></div>
+    <div id="tasbih-ok"  class="msg ok"></div>
+  </div>
+
+  <!-- Sync badge -->
+  <div id="sync-badge"></div>
+
+  <!-- Firebase compat SDK (sama seperti app Kindle sedia ada) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    /* ══════════════════════════════════════════
+       FIREBASE INIT
+    ══════════════════════════════════════════ */
+    var firebaseConfig = {
+      apiKey: "AIzaSyAGLX_xxH_dQ06epX4XCXtuSHN0DwZFMjA",
+      authDomain: "stress-auti-action.firebaseapp.com",
+      projectId: "stress-auti-action",
+      storageBucket: "stress-auti-action.firebasestorage.app",
+      messagingSenderId: "792580618622",
+      appId: "1:792580618622:web:f0efb1d630e795584d5b2f",
+      measurementId: "G-JH11TRZLGF"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var auth = firebase.auth();
+    var db   = firebase.firestore();
+
+    var ADMIN_EMAIL = 'adha86614@gmail.com';
+
+    /* Nilai default target harian (sama dengan app pertama) */
+    var MODE_DAILY_DEFAULTS = { tasbih: 10000, doa: 1000, hadis: 10 };
+
+    /* ══════════════════════════════════════════
+       STATE
+    ══════════════════════════════════════════ */
+    var currentUser  = null;
+    var currentMode  = 'tasbih'; // 'tasbih' | 'doa' | 'hadis'
+    var currentPin   = '';
+
+    /* Tasbih */
+    var tasbihUnsub  = null;
+    var tasbihData   = null;  // { remaining, done, dateKey }
+    var tasbihTarget = MODE_DAILY_DEFAULTS.tasbih;
+
+    /* Doa / Hadis */
+    var allDoaTimes    = [];
+    var allDoaDrawers  = [];
+    var allHadisTimes  = [];
+    var allHadisDrawers = [];
+    var activeTimeId   = null; // id untuk doa_times / hadis_times yang dipilih
+    var activeLacis    = [];   // laci yang sedang aktif (filtered by timeId)
+    var laciIndex      = 0;    // index dalam activeLacis
+    var modeUnsub      = null; // onSnapshot untuk doa_tasbih / hadis_tasbih
+
+    /* Reset confirm */
+    var resetPending = false;
+
+    /* ══════════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════════ */
+    function showScreen(id) {
+      var all = document.querySelectorAll('.screen');
+      for (var i = 0; i < all.length; i++) all[i].className = 'screen';
+      var el = document.getElementById(id);
+      if (el) el.className = 'screen active';
+    }
+
+    function setText(id, t) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = (t === null || t === undefined) ? '' : String(t);
+    }
+
+    function setErr(id, msg) { setText(id, msg); }
+    function clearMsg(id)    { setText(id, ''); }
+
+    function todayKey() {
+      var now = new Date();
+      var yyyy = now.getFullYear();
+      var mm   = String(now.getMonth() + 1).padStart(2, '0');
+      var dd   = String(now.getDate()).padStart(2, '0');
+      return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function fmtTime(ts) {
+      if (!ts) return '';
+      var d = new Date(ts);
+      var h = d.getHours(), mi = d.getMinutes(), s = d.getSeconds();
+      var ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      return h + ':' + String(mi).padStart(2,'0') + ':' + String(s).padStart(2,'0') + ampm;
+    }
+
+    function setConn(live, label) {
+      var dot = document.getElementById('conn-dot');
+      if (dot) {
+        dot.className = 'conn-dot' + (live === true ? ' live' : live === false ? ' err' : '');
+      }
+      setText('conn-label', label || '');
+    }
+
+    function setSyncBadge(msg) {
+      setText('sync-badge', msg || '');
+    }
+
+    /* ══════════════════════════════════════════
+       LOGIN
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-login').addEventListener('click', doLogin);
+    document.getElementById('pin-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    function doLogin() {
+      var pin = document.getElementById('pin-input').value.trim();
+      if (!pin) { setErr('login-err', 'Sila masukkan PIN'); return; }
+      clearMsg('login-err');
+      setText('login-err', 'Menyambung...');
+
+      auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+        .then(function(cred) {
+          currentUser = cred.user;
+          currentPin  = pin;
+          document.getElementById('pin-input').value = '';
+          clearMsg('login-err');
+          setText('menu-user-label', currentUser.email || '');
+          showScreen('screen-menu');
+        })
+        .catch(function(e) {
+          setErr('login-err', 'PIN salah atau ralat: ' + (e.message || e.code || e));
+        });
+    }
+
+    /* ══════════════════════════════════════════
+       LOG KELUAR
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-logout').addEventListener('click', function() {
+      stopAllListeners();
+      auth.signOut().then(function() {
+        currentUser = null;
+        showScreen('screen-login');
+      });
+    });
+
+    /* ══════════════════════════════════════════
+       MENU
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-menu-tasbih').addEventListener('click', function() {
+      currentMode  = 'tasbih';
+      tasbihTarget = MODE_DAILY_DEFAULTS.tasbih;
+      startTasbihMode();
+    });
+
+    document.getElementById('btn-menu-doa').addEventListener('click', function() {
+      currentMode = 'doa';
+      openKatScreen('doa');
+    });
+
+    document.getElementById('btn-menu-hadis').addEventListener('click', function() {
+      currentMode = 'hadis';
+      openKatScreen('hadis');
+    });
+
+    /* ══════════════════════════════════════════
+       PILIH KATEGORI (DOA / HADIS)
+    ══════════════════════════════════════════ */
+    function openKatScreen(mode) {
+      setText('kat-title', mode === 'doa' ? 'Pilih Kategori Doa' : 'Pilih Kitab/Bab Hadis');
+      var times  = mode === 'doa' ? allDoaTimes : allHadisTimes;
+      var drawers = mode === 'doa' ? allDoaDrawers : allHadisDrawers;
+
+      if (!times.length && !drawers.length) {
+        // Belum load — load dulu
+        loadDoaHadisCollections(function() {
+          openKatScreen(mode);
+        });
+        return;
+      }
+
+      renderKatList(mode);
+      showScreen('screen-kat');
+    }
+
+    function renderKatList(mode) {
+      var times   = mode === 'doa' ? allDoaTimes   : allHadisTimes;
+      var drawers = mode === 'doa' ? allDoaDrawers  : allHadisDrawers;
+      var list    = document.getElementById('kat-list');
+      list.innerHTML = '';
+
+      if (!times.length) {
+        list.innerHTML = '<div class="msg">Tiada kategori dijumpai.</div>';
+        return;
+      }
+
+      // Sort by name
+      var sorted = times.slice().sort(function(a,b) {
+        return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+      });
+
+      sorted.forEach(function(t) {
+        var count = drawers.filter(function(d) {
+          return d.timeId === t.id && (d.zikir || d.maksud || d.title);
+        }).length;
+        if (!count) return; // skip kategori kosong
+
+        var div = document.createElement('div');
+        div.className = 'kat-item' + (activeTimeId === t.id ? ' aktif' : '');
+
+        var mainDiv = document.createElement('div');
+        mainDiv.textContent = t.name || '(Tanpa nama)';
+
+        var subDiv = document.createElement('div');
+        subDiv.className = 'kat-sub';
+        subDiv.textContent = count + ' laci';
+
+        div.appendChild(mainDiv);
+        div.appendChild(subDiv);
+
+        div.addEventListener('click', function() {
+          activeTimeId = t.id;
+          buildActiveLacis(mode);
+          laciIndex = 0;
+          startModeScreen(mode);
+        });
+
+        list.appendChild(div);
+      });
+
+      if (!list.children.length) {
+        list.innerHTML = '<div class="msg">Tiada laci dalam mana-mana kategori.</div>';
+      }
+    }
+
+    document.getElementById('btn-kat-back').addEventListener('click', function() {
+      showScreen('screen-menu');
+    });
+
+    function buildActiveLacis(mode) {
+      var drawers = mode === 'doa' ? allDoaDrawers : allHadisDrawers;
+      activeLacis = drawers
+        .filter(function(d) {
+          return d.timeId === activeTimeId && (d.zikir || d.maksud || d.title);
+        })
+        .sort(function(a,b) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+        });
+    }
+
+    /* ══════════════════════════════════════════
+       LOAD DOA / HADIS COLLECTIONS
+    ══════════════════════════════════════════ */
+    var collectionsLoaded = false;
+
+    function loadDoaHadisCollections(cb) {
+      if (!currentUser) { cb && cb(); return; }
+      var uid = currentUser.uid;
+
+      Promise.all([
+        db.collection('users').doc(uid).collection('doa_times').get(),
+        db.collection('users').doc(uid).collection('doa_drawers').get(),
+        db.collection('users').doc(uid).collection('hadis_times').get(),
+        db.collection('users').doc(uid).collection('hadis_drawers').get()
+      ]).then(function(res) {
+        allDoaTimes = [];
+        res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allDoaTimes.push(x); });
+
+        allDoaDrawers = [];
+        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allDoaDrawers.push(x); });
+
+        allHadisTimes = [];
+        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allHadisTimes.push(x); });
+
+        allHadisDrawers = [];
+        res[3].forEach(function(d) { var x = d.data(); x.id = d.id; allHadisDrawers.push(x); });
+
+        collectionsLoaded = true;
+        cb && cb();
+      }).catch(function(e) {
+        setErr('menu-err', 'Gagal load: ' + (e.message || e));
+        cb && cb();
+      });
+    }
+
+    /* ══════════════════════════════════════════
+       MULAKAN MODE TASBIH (countdown biasa)
+    ══════════════════════════════════════════ */
+    function startTasbihMode() {
+      stopAllListeners();
+      updateModeTag('TASBIH');
+      document.getElementById('laci-box').style.display   = 'none';
+      document.getElementById('laci-nav').style.display   = 'none';
+      setText('laci-counter', '');
+      document.getElementById('btn-tap').className = '';
+      document.getElementById('btn-tap').textContent = 'TAP — ISTIGFAR';
+      clearMsg('tasbih-err');
+      clearMsg('tasbih-ok');
+      showScreen('screen-tasbih');
+
+      subscribeTasbih('tasbih', todayKey());
+    }
+
+    /* ══════════════════════════════════════════
+       MULAKAN MODE DOA / HADIS
+    ══════════════════════════════════════════ */
+    function startModeScreen(mode) {
+      stopAllListeners();
+      var tag = mode === 'doa' ? '🤲 DOA' : '📚 HADIS';
+      updateModeTag(tag);
+
+      document.getElementById('laci-box').style.display = 'block';
+      document.getElementById('laci-nav').style.display = 'flex';
+      document.getElementById('btn-tap').className = '';
+      document.getElementById('btn-tap').textContent = 'TAP — ' + (mode === 'doa' ? 'BACA DOA' : 'BACA HADIS');
+      clearMsg('tasbih-err');
+      clearMsg('tasbih-ok');
+      showScreen('screen-tasbih');
+
+      renderLaci();
+
+      var coll = mode + '_tasbih';
+      subscribeTasbih(coll, todayKey());
+    }
+
+    /* ══════════════════════════════════════════
+       RENDER LACI (DOA/HADIS)
+    ══════════════════════════════════════════ */
+    function renderLaci() {
+      if (!activeLacis.length) {
+        setText('laci-cat',    'Tiada laci');
+        setText('laci-zikir',  '');
+        setText('laci-maksud', '');
+        setText('laci-target', '');
+        setText('laci-counter', '');
+        return;
+      }
+
+      var laci = activeLacis[laciIndex];
+      if (!laci) { laciIndex = 0; laci = activeLacis[0]; }
+
+      // Cari nama kategori
+      var times = currentMode === 'doa' ? allDoaTimes : allHadisTimes;
+      var katObj = times.find ? times.find(function(t) { return t.id === activeTimeId; })
+                              : (function(){ for(var i=0;i<times.length;i++) if(times[i].id===activeTimeId) return times[i]; })();
+      var katNama = (katObj && katObj.name) ? katObj.name : (currentMode === 'doa' ? 'Doa' : 'Hadis');
+
+      setText('laci-cat',    katNama + ' · ' + (laci.title || ''));
+      setText('laci-zikir',  laci.zikir || laci.title || '');
+      setText('laci-maksud', laci.maksud || '');
+      setText('laci-target', laci.target ? ('Target: ' + laci.target) : '');
+      setText('laci-counter', (laciIndex + 1) + ' / ' + activeLacis.length);
+    }
+
+    /* Navigasi laci */
+    document.getElementById('btn-prev-laci').addEventListener('click', function() {
+      if (!activeLacis.length) return;
+      laciIndex = (laciIndex - 1 + activeLacis.length) % activeLacis.length;
+      renderLaci();
+      syncLaciIndexToFirestore();
+    });
+
+    document.getElementById('btn-next-laci').addEventListener('click', function() {
+      if (!activeLacis.length) return;
+      laciIndex = (laciIndex + 1) % activeLacis.length;
+      renderLaci();
+      syncLaciIndexToFirestore();
+    });
+
+    function syncLaciIndexToFirestore() {
+      if (!currentUser || !activeTimeId) return;
+      var coll = currentMode === 'doa' ? 'doa_times' : 'hadis_times';
+      db.collection('users').doc(currentUser.uid)
+        .collection(coll).doc(activeTimeId)
+        .update({ lastIndex: laciIndex, updatedAt: Date.now() })
+        .catch(function(e) { console.warn('Gagal sync lastIndex:', e); });
+    }
+
+    /* ══════════════════════════════════════════
+       SUBSCRIBE TASBIH (REALTIME — DUA HALA)
+       coll: 'tasbih' | 'doa_tasbih' | 'hadis_tasbih'
+       key:  dateKey (YYYY-MM-DD)
+    ══════════════════════════════════════════ */
+    function subscribeTasbih(coll, key) {
+      if (!currentUser) return;
+      var uid = currentUser.uid;
+      var ref = db.collection('users').doc(uid).collection(coll).doc(key);
+
+      // Pastikan dokumen wujud dulu
+      ref.get().then(function(snap) {
+        if (!snap.exists) {
+          var defaultTarget = coll === 'tasbih' ? MODE_DAILY_DEFAULTS.tasbih
+                            : coll === 'doa_tasbih' ? MODE_DAILY_DEFAULTS.doa
+                            : MODE_DAILY_DEFAULTS.hadis;
+          return ref.set({
+            dateKey: key, createdAt: Date.now(),
+            remaining: defaultTarget, done: false
+          });
+        }
+      }).then(function() {
+        // Sekarang subscribe realtime
+        if (modeUnsub) modeUnsub();
+        modeUnsub = ref.onSnapshot(function(snap) {
+          if (!snap.exists) return;
+          tasbihData = snap.data();
+          tasbihTarget = coll === 'tasbih' ? MODE_DAILY_DEFAULTS.tasbih
+                       : coll === 'doa_tasbih' ? MODE_DAILY_DEFAULTS.doa
+                       : MODE_DAILY_DEFAULTS.hadis;
+          setConn(true, 'Tersambung');
+          updateTasbihUI();
+          setSyncBadge('Sync: ' + fmtTime(Date.now()));
+        }, function(e) {
+          setConn(false, 'Ralat sambungan');
+          setErr('tasbih-err', 'Ralat: ' + (e.message || e));
+        });
+      }).catch(function(e) {
+        setConn(false, 'Gagal sambung');
+        setErr('tasbih-err', 'Gagal: ' + (e.message || e));
+      });
+    }
+
+    /* ══════════════════════════════════════════
+       UPDATE UI TASBIH
+    ══════════════════════════════════════════ */
+    function updateTasbihUI() {
+      if (!tasbihData) return;
+
+      var rem  = (tasbihData.remaining !== undefined && tasbihData.remaining !== null)
+                 ? tasbihData.remaining : tasbihTarget;
+      var done = !!tasbihData.done;
+      var selesai = tasbihTarget - rem;
+      if (selesai < 0) selesai = 0;
+
+      setText('count-number', done ? '✓ ' + tasbihTarget : String(rem));
+      setText('count-done', done
+        ? 'Selesai hari ini!'
+        : (selesai + ' / ' + tasbihTarget + ' selesai'));
+
+      var pct = tasbihTarget > 0 ? Math.round((selesai / tasbihTarget) * 100) : 0;
+      if (pct > 100) pct = 100;
+      var fill = document.getElementById('progress-fill');
+      if (fill) fill.style.width = pct + '%';
+
+      // Butang tap
+      var btnTap = document.getElementById('btn-tap');
+      if (done) {
+        btnTap.className = 'done-state';
+        btnTap.textContent = 'SELESAI ✓';
+      } else {
+        btnTap.className = '';
+        if (currentMode === 'tasbih') btnTap.textContent = 'TAP — ISTIGFAR';
+        else if (currentMode === 'doa') btnTap.textContent = 'TAP — BACA DOA';
+        else btnTap.textContent = 'TAP — BACA HADIS';
+      }
+
+      // Masa kemaskini
+      var updAt = tasbihData.updatedAt || tasbihData.createdAt;
+      setText('status-time', updAt ? fmtTime(updAt) : '');
+    }
+
+    function updateModeTag(label) {
+      setText('mode-tag', label);
+    }
+
+    /* ══════════════════════════════════════════
+       TAP — DECREMENT (tulis ke Firestore → app pertama terima)
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-tap').addEventListener('click', function() {
+      doTap();
+    });
+
+    // Support swipe/tap besar pada touch
+    document.getElementById('btn-tap').addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      doTap();
+    }, { passive: false });
+
+    var lastTapTs = 0;
+    function doTap() {
+      if (!currentUser || !tasbihData) {
+        setErr('tasbih-err', 'Belum tersambung'); return;
+      }
+      var now = Date.now();
+      if (now - lastTapTs < 300) return; // debounce 300ms
+      lastTapTs = now;
+
+      if (tasbihData.done) {
+        setErr('tasbih-err', 'Countdown hari ini sudah selesai');
+        return;
+      }
+      clearMsg('tasbih-err');
+      clearMsg('tasbih-ok');
+
+      var rem = (tasbihData.remaining !== undefined && tasbihData.remaining !== null)
+                ? tasbihData.remaining : tasbihTarget;
+
+      if (rem <= 0) {
+        tasbihData.done = true;
+        tasbihData.remaining = 0;
+        updateTasbihUI();
+      } else {
+        rem = rem - 1;
+        tasbihData.remaining = rem;
+        if (rem === 0) tasbihData.done = true;
+        updateTasbihUI();
+      }
+
+      // Simpan ke Firestore — app pertama akan dapat realtime update
+      var coll = currentMode === 'tasbih' ? 'tasbih'
+               : currentMode === 'doa'    ? 'doa_tasbih'
+               : 'hadis_tasbih';
+      var key = todayKey();
+      var uid = currentUser.uid;
+      var ref = db.collection('users').doc(uid).collection(coll).doc(key);
+
+      // Tulis setiap 10 atau bila habis (jimat write — sama seperti app pertama)
+      var shouldWrite = (tasbihData.remaining % 10 === 0) || tasbihData.done;
+      if (shouldWrite) {
+        ref.set({
+          remaining: tasbihData.remaining,
+          done:      tasbihData.done,
+          updatedAt: now
+        }, { merge: true }).catch(function(e) {
+          setErr('tasbih-err', 'Gagal simpan: ' + (e.message || e));
+        });
+      }
+
+      // Hantar command ke kindle_session/command supaya app pertama tahu
+      // (command "next" — app pertama akan panggil decrementTasbih)
+      // NOTA: Untuk mod tasbih biasa, app pertama juga subscribe tasbih/{dateKey}
+      //       jadi ia akan auto-sync melalui onSnapshot tanpa perlu command.
+      //       Command ini berguna sebagai fallback / explicit trigger.
+      if (currentMode === 'tasbih') {
+        db.collection('users').doc(uid)
+          .collection('kindle_session').doc('command')
+          .set({ command: 'tasbih_tap', ts: now, source: 'kindle_tasbih' }, { merge: true })
+          .catch(function() {});
+      }
+    }
+
+    /* ══════════════════════════════════════════
+       REFRESH MANUAL
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-refresh').addEventListener('click', function() {
+      clearMsg('tasbih-err');
+      clearMsg('tasbih-ok');
+      setConn(null, 'Menyegar...');
+
+      var coll = currentMode === 'tasbih' ? 'tasbih'
+               : currentMode === 'doa'    ? 'doa_tasbih'
+               : 'hadis_tasbih';
+      subscribeTasbih(coll, todayKey());
+    });
+
+    /* ══════════════════════════════════════════
+       RESET COUNTDOWN
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-reset-confirm').addEventListener('click', function() {
+      if (!resetPending) {
+        resetPending = true;
+        this.textContent = 'Tekan lagi utk reset';
+        this.style.color = '#c00';
+        var self = this;
+        setTimeout(function() {
+          resetPending = false;
+          self.textContent = 'Reset';
+          self.style.color = '';
+        }, 3000);
+        return;
+      }
+
+      resetPending = false;
+      this.textContent = 'Reset';
+      this.style.color = '';
+
+      if (!currentUser) return;
+      var coll = currentMode === 'tasbih' ? 'tasbih'
+               : currentMode === 'doa'    ? 'doa_tasbih'
+               : 'hadis_tasbih';
+      var target = coll === 'tasbih' ? MODE_DAILY_DEFAULTS.tasbih
+                 : coll === 'doa_tasbih' ? MODE_DAILY_DEFAULTS.doa
+                 : MODE_DAILY_DEFAULTS.hadis;
+      var key = todayKey();
+      var uid = currentUser.uid;
+
+      db.collection('users').doc(uid).collection(coll).doc(key)
+        .set({ remaining: target, done: false, updatedAt: Date.now() }, { merge: true })
+        .then(function() {
+          setText('tasbih-ok', 'Reset berjaya');
+          setTimeout(function() { clearMsg('tasbih-ok'); }, 2000);
+        })
+        .catch(function(e) {
+          setErr('tasbih-err', 'Gagal reset: ' + (e.message || e));
+        });
+    });
+
+    /* ══════════════════════════════════════════
+       BALIK KE MENU DARI TASBIH SCREEN
+    ══════════════════════════════════════════ */
+    document.getElementById('btn-back-tasbih').addEventListener('click', function() {
+      stopAllListeners();
+      showScreen('screen-menu');
+    });
+
+    /* ══════════════════════════════════════════
+       STOP SEMUA LISTENERS
+    ══════════════════════════════════════════ */
+    function stopAllListeners() {
+      if (modeUnsub) { modeUnsub(); modeUnsub = null; }
+      tasbihData = null;
+      setConn(null, '');
+    }
+
+    /* ══════════════════════════════════════════
+       CLOCK — update masa atas screen setiap saat
+    ══════════════════════════════════════════ */
+    setInterval(function() {
+      var el = document.getElementById('status-time');
+      if (el && tasbihData) {
+        var upd = tasbihData.updatedAt || tasbihData.createdAt;
+        el.textContent = upd ? ('Kemaskini: ' + fmtTime(upd)) : fmtTime(Date.now());
+      }
+    }, 5000);
+
+    /* ══════════════════════════════════════════
+       AUTH STATE — preload collections bila dah login
+    ══════════════════════════════════════════ */
+    auth.onAuthStateChanged(function(user) {
+      if (user) {
+        currentUser = user;
+        setText('menu-user-label', user.email || '');
+        // Preload doa/hadis supaya pilih kategori laju
+        loadDoaHadisCollections(null);
+        showScreen('screen-menu');
+      } else {
+        currentUser = null;
+        stopAllListeners();
+        showScreen('screen-login');
+      }
+    });
+
+  </script>
+</body>
+</html>
