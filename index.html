@@ -820,8 +820,7 @@
                        : MODE_DAILY_DEFAULTS.hadis;
           setConn(true, 'Tersambung');
           updateTasbihUI();
-          _snapshotCount++;
-          if (_snapshotCount % 5 === 1) updateStatusTime();
+          updateStatusTime();
           setSyncBadge('Sync: ' + fmtTime(Date.now()));
         }, function(e) {
           setConn(false, 'Ralat sambungan');
