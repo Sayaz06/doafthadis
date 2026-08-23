@@ -313,6 +313,7 @@
     var _doaReadAllUnsub   = null;
     var _hadisReadAllUnsub = null;
     var _kindleWriting     = false; // flag elak loop bila kindle sendiri yang tulis
+    var _kindleWriteTimer  = null;
 
     /* Doa / Hadis */
     var allDoaTimes    = [];
@@ -759,8 +760,10 @@
 
     function syncLaciIndexToFirestore() {
       if (!currentUser) return;
+      // Set flag — elak loop bila kita sendiri yang tulis
       _kindleWriting = true;
-      setTimeout(function() { _kindleWriting = false; }, 1000);
+      if (_kindleWriteTimer) clearTimeout(_kindleWriteTimer);
+      _kindleWriteTimer = setTimeout(function() { _kindleWriting = false; }, 2000);
 
       if (bacaSemua && currentMode === 'doa') {
         db.collection('users').doc(currentUser.uid)
