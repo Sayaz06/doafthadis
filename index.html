@@ -925,7 +925,7 @@
       var ref = db.collection('users').doc(uid).collection(coll).doc(key);
 
       // Tulis setiap 10 atau bila habis (jimat write — sama seperti app pertama)
-      var shouldWrite = (tasbihData.remaining % 10 === 0) || tasbihData.done;
+            var shouldWrite = (tasbihData.remaining % 5 === 0) || tasbihData.done;
       if (shouldWrite) {
         ref.set({
           remaining: tasbihData.remaining,
