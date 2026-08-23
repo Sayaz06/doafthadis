@@ -479,10 +479,25 @@
           divSemua.addEventListener('click', function() {
             bacaSemua = true;
             activeTimeId = null;
-            // Bina activeLacis dari SEMUA doa, susun A-Z / 1-100
-            activeLacis = semua.slice().sort(function(a,b) {
-              return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+            // Susun ikut turutan kategori (nama kat A-Z/1-100) kemudian laci dalam kat (title A-Z/1-100)
+            var sortedTimes = allDoaTimes.slice().sort(function(a,b) {
+              return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
             });
+            var laciTersusun = [];
+            sortedTimes.forEach(function(t) {
+              var laciDalamKat = semua
+                .filter(function(d) { return d.timeId === t.id; })
+                .sort(function(a,b) {
+                  return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+                });
+              laciDalamKat.forEach(function(d) { laciTersusun.push(d); });
+            });
+            // Laci yang tiada timeId (jika ada) letak di hujung
+            semua.forEach(function(d) {
+              var sudahAda = laciTersusun.indexOf(d) !== -1;
+              if (!sudahAda) laciTersusun.push(d);
+            });
+            activeLacis = laciTersusun;
             laciIndex = 0;
             // Cuba load lastIndex dari settings/doaReadAll (selaras dengan app pertama)
             loadDoaReadAllIndex(function(idx) {
@@ -637,25 +652,26 @@
     ══════════════════════════════════════════ */
     function renderLaci() {
       if (!activeLacis.length) {
-        setText('laci-cat',    'Tiada laci');
-        setText('laci-zikir',  '');
+        setText('laci-cat', 'Tiada laci');
+        setText('laci-zikir', '');
         setText('laci-maksud', '');
         setText('laci-target', '');
         setText('laci-counter', '');
         return;
       }
-
       var laci = activeLacis[laciIndex];
       if (!laci) { laciIndex = 0; laci = activeLacis[0]; }
-
-      // Cari nama kategori
+      // Cari nama kategori berdasarkan timeId laci semasa (berguna untuk Baca Semua)
       var times = currentMode === 'doa' ? allDoaTimes : allHadisTimes;
-      var katObj = times.find ? times.find(function(t) { return t.id === activeTimeId; })
-                              : (function(){ for(var i=0;i<times.length;i++) if(times[i].id===activeTimeId) return times[i]; })();
+      var katObj = null;
+      for (var i = 0; i < times.length; i++) {
+        if (times[i].id === laci.timeId) { katObj = times[i]; break; }
+      }
       var katNama = (katObj && katObj.name) ? katObj.name : (currentMode === 'doa' ? 'Doa' : 'Hadis');
-
-      setText('laci-cat',    katNama + ' · ' + (laci.title || ''));
-      setText('laci-zikir',  laci.zikir || laci.title || '');
+      // Baris atas: Nama Kategori · Nama Laci
+      setText('laci-cat', katNama + ' · ' + (laci.title || ''));
+      // Baris zikir: isi zikir (jangan ulang title kalau zikir kosong — guna maksud atau kosong)
+      setText('laci-zikir', laci.zikir || '');
       setText('laci-maksud', laci.maksud || '');
       setText('laci-target', laci.target ? ('Target: ' + laci.target) : '');
       setText('laci-counter', (laciIndex + 1) + ' / ' + activeLacis.length);
