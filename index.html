@@ -346,10 +346,11 @@
     function clearMsg(id)    { setText(id, ''); }
 
     function todayKey() {
-      var now = new Date();
-      var yyyy = now.getFullYear();
-      var mm   = String(now.getMonth() + 1).padStart(2, '0');
-      var dd   = String(now.getDate()).padStart(2, '0');
+      // Guna UTC+8 (Malaysia) supaya semua peranti guna tarikh yang sama
+      var now = new Date(Date.now() + 8 * 60 * 60 * 1000);
+      var yyyy = now.getUTCFullYear();
+      var mm   = String(now.getUTCMonth() + 1).padStart(2, '0');
+      var dd   = String(now.getUTCDate()).padStart(2, '0');
       return yyyy + '-' + mm + '-' + dd;
     }
 
