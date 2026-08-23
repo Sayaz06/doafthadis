@@ -98,18 +98,22 @@
       padding: 8px 10px; margin: 8px 0; min-height: 60px;
     }
     .laci-title {
-      font-size: 0.78rem; font-weight: bold; color: #555;
-      margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;
+      font-size: 0.95rem; font-weight: bold; color: #000;
+      margin-bottom: 6px; letter-spacing: 0px;
+    }
+    .laci-nama {
+      font-size: 1rem; font-weight: normal; color: #222;
+      margin-bottom: 8px;
     }
     .laci-zikir {
-      font-size: 1.05rem; font-weight: bold; line-height: 1.35;
+      font-size: 1.15rem; font-weight: bold; line-height: 1.45;
     }
     .laci-maksud {
-      font-size: 0.82rem; color: #333; margin-top: 4px;
-      line-height: 1.3; font-style: italic;
+      font-size: 0.88rem; color: #333; margin-top: 6px;
+      line-height: 1.4; font-style: italic;
     }
     .laci-target {
-      font-size: 0.75rem; color: #666; margin-top: 3px;
+      font-size: 0.75rem; color: #666; margin-top: 4px;
     }
 
     /* Butang TAP */
@@ -238,6 +242,7 @@
     <!-- Laci doa/hadis (tersembunyi untuk mode tasbih biasa) -->
     <div class="laci-box" id="laci-box" style="display:none;">
       <div class="laci-title" id="laci-cat"></div>
+      <div class="laci-nama" id="laci-nama"></div>
       <div class="laci-zikir" id="laci-zikir"></div>
       <div class="laci-maksud" id="laci-maksud"></div>
       <div class="laci-target" id="laci-target"></div>
@@ -305,6 +310,9 @@
     var tasbihUnsub  = null;
     var tasbihData   = null;  // { remaining, done, dateKey }
     var tasbihTarget = MODE_DAILY_DEFAULTS.tasbih;
+    var _doaReadAllUnsub   = null;
+    var _hadisReadAllUnsub = null;
+    var _kindleWriting     = false; // flag elak loop bila kindle sendiri yang tulis
 
     /* Doa / Hadis */
     var allDoaTimes    = [];
@@ -645,6 +653,13 @@
 
       var coll = mode + '_tasbih';
       subscribeTasbih(coll, todayKey());
+
+      // Subscribe laci index realtime supaya bila phone tukar laci, Kindle ikut
+      if (mode === 'doa' && bacaSemua) {
+        subscribeDoaReadAllIndex();
+      } else if (mode === 'hadis') {
+        subscribeHadisReadAllIndex();
+      }
     }
 
     /* ══════════════════════════════════════════
@@ -653,6 +668,7 @@
     function renderLaci() {
       if (!activeLacis.length) {
         setText('laci-cat', 'Tiada laci');
+        setText('laci-nama', '');
         setText('laci-zikir', '');
         setText('laci-maksud', '');
         setText('laci-target', '');
@@ -668,9 +684,10 @@
         if (times[i].id === laci.timeId) { katObj = times[i]; break; }
       }
       var katNama = (katObj && katObj.name) ? katObj.name : (currentMode === 'doa' ? 'Doa' : 'Hadis');
-      // Baris atas: Nama Kategori · Nama Laci
-      setText('laci-cat', katNama + ' · ' + (laci.title || ''));
-      // Baris zikir: isi zikir (jangan ulang title kalau zikir kosong — guna maksud atau kosong)
+      // Baris 1: "kategori : [nama kategori]"
+      setText('laci-cat', 'kategori : ' + katNama);
+      // Baris 2: nama laci sahaja
+      setText('laci-nama', laci.title || '');
       setText('laci-zikir', laci.zikir || '');
       setText('laci-maksud', laci.maksud || '');
       setText('laci-target', laci.target ? ('Target: ' + laci.target) : '');
@@ -703,14 +720,59 @@
         .catch(function() { cb && cb(0); });
     }
 
+    function subscribeDoaReadAllIndex() {
+      if (!currentUser) return;
+      if (_doaReadAllUnsub) { _doaReadAllUnsub(); _doaReadAllUnsub = null; }
+      _doaReadAllUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('settings').doc('doaReadAll')
+        .onSnapshot(function(snap) {
+          if (!snap.exists) return;
+          if (_kindleWriting) return;
+          var newIndex = snap.data().lastIndex || 0;
+          if (newIndex !== laciIndex && currentMode === 'doa' && bacaSemua) {
+            laciIndex = newIndex;
+            if (laciIndex >= activeLacis.length) laciIndex = 0;
+            renderLaci();
+            setSyncBadge('Sync laci: ' + fmtTime(Date.now()));
+          }
+        }, function(e) { console.warn('subscribeDoaReadAllIndex error:', e); });
+    }
+
+    function subscribeHadisReadAllIndex() {
+      if (!currentUser) return;
+      if (_hadisReadAllUnsub) { _hadisReadAllUnsub(); _hadisReadAllUnsub = null; }
+      _hadisReadAllUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('settings').doc('hadisReadAll')
+        .onSnapshot(function(snap) {
+          if (!snap.exists) return;
+          if (_kindleWriting) return;
+          var newIndex = snap.data().lastIndex || 0;
+          if (newIndex !== laciIndex && currentMode === 'hadis') {
+            laciIndex = newIndex;
+            if (laciIndex >= activeLacis.length) laciIndex = 0;
+            renderLaci();
+            setSyncBadge('Sync laci: ' + fmtTime(Date.now()));
+          }
+        }, function(e) { console.warn('subscribeHadisReadAllIndex error:', e); });
+    }
+
     function syncLaciIndexToFirestore() {
       if (!currentUser) return;
+      _kindleWriting = true;
+      setTimeout(function() { _kindleWriting = false; }, 1000);
+
       if (bacaSemua && currentMode === 'doa') {
-        // Sync ke settings/doaReadAll — selaras dengan app pertama
         db.collection('users').doc(currentUser.uid)
           .collection('settings').doc('doaReadAll')
           .set({ lastIndex: laciIndex, updatedAt: Date.now() }, { merge: true })
           .catch(function(e) { console.warn('Gagal sync doaReadAll:', e); });
+        return;
+      }
+      if (currentMode === 'hadis') {
+        db.collection('users').doc(currentUser.uid)
+          .collection('settings').doc('hadisReadAll')
+          .set({ lastIndex: laciIndex, updatedAt: Date.now() }, { merge: true })
+          .catch(function(e) { console.warn('Gagal sync hadisReadAll:', e); });
         return;
       }
       if (!activeTimeId) return;
@@ -952,6 +1014,8 @@
     ══════════════════════════════════════════ */
     function stopAllListeners() {
       if (modeUnsub) { modeUnsub(); modeUnsub = null; }
+      if (_doaReadAllUnsub) { _doaReadAllUnsub(); _doaReadAllUnsub = null; }
+      if (_hadisReadAllUnsub) { _hadisReadAllUnsub(); _hadisReadAllUnsub = null; }
       tasbihData = null;
       setConn(null, '');
     }
