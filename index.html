@@ -444,6 +444,8 @@
       showScreen('screen-kat');
     }
 
+    var bacaSemua = false; // flag: sedang dalam mod Baca Semua Doa
+
     function renderKatList(mode) {
       var times   = mode === 'doa' ? allDoaTimes   : allHadisTimes;
       var drawers = mode === 'doa' ? allDoaDrawers  : allHadisDrawers;
@@ -453,6 +455,44 @@
       if (!times.length) {
         list.innerHTML = '<div class="msg">Tiada kategori dijumpai.</div>';
         return;
+      }
+
+      // ── BACA SEMUA DOA (hanya untuk mod doa) ──
+      if (mode === 'doa') {
+        var semua = drawers.filter(function(d) {
+          return d.zikir || d.maksud || d.title;
+        });
+        if (semua.length) {
+          var divSemua = document.createElement('div');
+          divSemua.className = 'kat-item' + (bacaSemua ? ' aktif' : '');
+
+          var mainSemua = document.createElement('div');
+          mainSemua.textContent = '📖 Baca Semua Doa';
+
+          var subSemua = document.createElement('div');
+          subSemua.className = 'kat-sub';
+          subSemua.textContent = semua.length + ' doa keseluruhan (ikut turutan A-Z)';
+
+          divSemua.appendChild(mainSemua);
+          divSemua.appendChild(subSemua);
+
+          divSemua.addEventListener('click', function() {
+            bacaSemua = true;
+            activeTimeId = null;
+            // Bina activeLacis dari SEMUA doa, susun A-Z / 1-100
+            activeLacis = semua.slice().sort(function(a,b) {
+              return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+            });
+            laciIndex = 0;
+            // Cuba load lastIndex dari settings/doaReadAll (selaras dengan app pertama)
+            loadDoaReadAllIndex(function(idx) {
+              laciIndex = (idx >= 0 && idx < activeLacis.length) ? idx : 0;
+              startModeScreen('doa');
+            });
+          });
+
+          list.appendChild(divSemua);
+        }
       }
 
       // Sort by name
@@ -467,7 +507,7 @@
         if (!count) return; // skip kategori kosong
 
         var div = document.createElement('div');
-        div.className = 'kat-item' + (activeTimeId === t.id ? ' aktif' : '');
+        div.className = 'kat-item' + (!bacaSemua && activeTimeId === t.id ? ' aktif' : '');
 
         var mainDiv = document.createElement('div');
         mainDiv.textContent = t.name || '(Tanpa nama)';
@@ -480,6 +520,7 @@
         div.appendChild(subDiv);
 
         div.addEventListener('click', function() {
+          bacaSemua = false;
           activeTimeId = t.id;
           buildActiveLacis(mode);
           laciIndex = 0;
@@ -497,6 +538,9 @@
     document.getElementById('btn-kat-back').addEventListener('click', function() {
       showScreen('screen-menu');
     });
+
+    // Track dari mana tasbih screen dibuka
+    var tasbihBackTarget = 'screen-menu'; // 'screen-menu' atau 'screen-kat'
 
     function buildActiveLacis(mode) {
       var drawers = mode === 'doa' ? allDoaDrawers : allHadisDrawers;
@@ -549,6 +593,8 @@
     ══════════════════════════════════════════ */
     function startTasbihMode() {
       stopAllListeners();
+      tasbihBackTarget = 'screen-menu';
+      setText('btn-back-tasbih', '← Menu');
       updateModeTag('TASBIH');
       document.getElementById('laci-box').style.display   = 'none';
       document.getElementById('laci-nav').style.display   = 'none';
@@ -567,6 +613,8 @@
     ══════════════════════════════════════════ */
     function startModeScreen(mode) {
       stopAllListeners();
+      tasbihBackTarget = 'screen-kat';
+      setText('btn-back-tasbih', '← Balik');
       var tag = mode === 'doa' ? '🤲 DOA' : '📚 HADIS';
       updateModeTag(tag);
 
@@ -628,8 +676,28 @@
       syncLaciIndexToFirestore();
     });
 
+    function loadDoaReadAllIndex(cb) {
+      if (!currentUser) { cb && cb(0); return; }
+      db.collection('users').doc(currentUser.uid)
+        .collection('settings').doc('doaReadAll')
+        .get()
+        .then(function(snap) {
+          cb && cb(snap.exists ? (snap.data().lastIndex || 0) : 0);
+        })
+        .catch(function() { cb && cb(0); });
+    }
+
     function syncLaciIndexToFirestore() {
-      if (!currentUser || !activeTimeId) return;
+      if (!currentUser) return;
+      if (bacaSemua && currentMode === 'doa') {
+        // Sync ke settings/doaReadAll — selaras dengan app pertama
+        db.collection('users').doc(currentUser.uid)
+          .collection('settings').doc('doaReadAll')
+          .set({ lastIndex: laciIndex, updatedAt: Date.now() }, { merge: true })
+          .catch(function(e) { console.warn('Gagal sync doaReadAll:', e); });
+        return;
+      }
+      if (!activeTimeId) return;
       var coll = currentMode === 'doa' ? 'doa_times' : 'hadis_times';
       db.collection('users').doc(currentUser.uid)
         .collection(coll).doc(activeTimeId)
@@ -860,7 +928,7 @@
     ══════════════════════════════════════════ */
     document.getElementById('btn-back-tasbih').addEventListener('click', function() {
       stopAllListeners();
-      showScreen('screen-menu');
+      showScreen(tasbihBackTarget || 'screen-menu');
     });
 
     /* ══════════════════════════════════════════
