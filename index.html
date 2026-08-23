@@ -227,8 +227,8 @@
     <div class="status-bar">
       <span><span class="conn-dot" id="conn-dot"></span><span id="conn-label">Menyambung...</span></span>
       <span class="mode-tag" id="mode-tag">TASBIH</span>
-      <span id="status-time"></span>
     </div>
+    <div id="status-time" style="font-size:0.62rem;color:#777;text-align:right;margin-bottom:3px;min-height:0.9em;"></div>
 
     <!-- Kiraan -->
     <div class="count-display">
@@ -811,6 +811,7 @@
       }).then(function() {
         // Sekarang subscribe realtime
         if (modeUnsub) modeUnsub();
+        var _snapshotCount = 0;
         modeUnsub = ref.onSnapshot(function(snap) {
           if (!snap.exists) return;
           tasbihData = snap.data();
@@ -819,6 +820,8 @@
                        : MODE_DAILY_DEFAULTS.hadis;
           setConn(true, 'Tersambung');
           updateTasbihUI();
+          _snapshotCount++;
+          if (_snapshotCount % 5 === 1) updateStatusTime();
           setSyncBadge('Sync: ' + fmtTime(Date.now()));
         }, function(e) {
           setConn(false, 'Ralat sambungan');
@@ -864,9 +867,7 @@
         else btnTap.textContent = 'TAP — BACA HADIS';
       }
 
-      // Masa kemaskini
-      var updAt = tasbihData.updatedAt || tasbihData.createdAt;
-      setText('status-time', updAt ? fmtTime(updAt) : '');
+      // Masa kemaskini — diupdate setiap 5 countdown sahaja
     }
 
     function updateModeTag(label) {
@@ -1025,16 +1026,16 @@
     }
 
     /* ══════════════════════════════════════════
-       CLOCK — update masa atas screen setiap saat
+       CLOCK — update masa atas screen — 5 countdown
     ══════════════════════════════════════════ */
-    setInterval(function() {
+
+    function updateStatusTime() {
       var el = document.getElementById('status-time');
       if (el && tasbihData) {
         var upd = tasbihData.updatedAt || tasbihData.createdAt;
-        el.textContent = upd ? ('Kemaskini: ' + fmtTime(upd)) : fmtTime(Date.now());
+        el.textContent = upd ? ('Kali terakhir dikemaskini: ' + fmtTime(upd)) : '';
       }
-    }, 5000);
-
+    }
     /* ══════════════════════════════════════════
        AUTH STATE — preload collections bila dah login
     ══════════════════════════════════════════ */
