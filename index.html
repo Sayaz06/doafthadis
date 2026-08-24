@@ -22,6 +22,8 @@
     /* ── SCREENS ── */
     .screen { display: none; }
     .screen.active { display: block; }
+    body.auth-checking .screen { display: none !important; }
+    body.auth-checking .screen { display: none !important; }
 
     /* ── LOGIN ── */
     #screen-login { padding: 30px 12px; }
@@ -293,6 +295,7 @@
     firebase.initializeApp(firebaseConfig);
     var auth = firebase.auth();
     var db   = firebase.firestore();
+    document.body.classList.add('auth-checking');
 
     var ADMIN_EMAIL = 'adha86614@gmail.com';
 
@@ -1040,10 +1043,10 @@
        AUTH STATE — preload collections bila dah login
     ══════════════════════════════════════════ */
     auth.onAuthStateChanged(function(user) {
+      document.body.classList.remove('auth-checking');
       if (user) {
         currentUser = user;
         setText('menu-user-label', user.email || '');
-        // Preload doa/hadis supaya pilih kategori laju
         loadDoaHadisCollections(null);
         showScreen('screen-menu');
       } else {
