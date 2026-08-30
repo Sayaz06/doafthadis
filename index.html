@@ -454,8 +454,18 @@
         return;
       }
 
-      renderKatList(mode);
-      showScreen('screen-kat');
+      // Load drawers on-demand sebelum render senarai kategori
+      if (mode === 'doa') {
+        loadDoaDrawersOnDemand(function() {
+          renderKatList(mode);
+          showScreen('screen-kat');
+        });
+      } else {
+        loadHadisDrawersOnDemand(function() {
+          renderKatList(mode);
+          showScreen('screen-kat');
+        });
+      }
     }
 
     var bacaSemua = false; // flag: sedang dalam mod Baca Semua Doa
@@ -587,29 +597,73 @@
     ══════════════════════════════════════════ */
     var collectionsLoaded = false;
 
+    // ── CACHE DOA & HADIS DRAWERS ──
+    // Prinsip: load on-demand sahaja, simpan dalam cache
+    // Tiada double work — selagi dalam cache, tidak sentuh Firestore
+    var _doaDrawerCache = null;      // null = belum load, [] = dah load tapi kosong
+    var _hadisDrawerCache = null;
+
+    function loadDoaDrawersOnDemand(cb) {
+      if (!currentUser) { cb && cb(); return; }
+      if (_doaDrawerCache) {
+        console.log('✅ Cache hit — doa_drawers dari memori, tiada query Firestore');
+        allDoaDrawers = _doaDrawerCache;
+        cb && cb();
+        return;
+      }
+      console.log('📥 Cache miss — doa_drawers diload dari Firestore');
+      db.collection('users').doc(currentUser.uid).collection('doa_drawers').get()
+        .then(function(snap) {
+          allDoaDrawers = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allDoaDrawers.push(x); });
+          _doaDrawerCache = allDoaDrawers;
+          console.log('📥 Cache miss — doa_drawers disimpan dalam cache (' + allDoaDrawers.length + ' laci)');
+          cb && cb();
+        }).catch(function(e) {
+          console.error('❌ Gagal load doa_drawers:', e.message);
+          cb && cb();
+        });
+    }
+
+    function loadHadisDrawersOnDemand(cb) {
+      if (!currentUser) { cb && cb(); return; }
+      if (_hadisDrawerCache) {
+        console.log('✅ Cache hit — hadis_drawers dari memori, tiada query Firestore');
+        allHadisDrawers = _hadisDrawerCache;
+        cb && cb();
+        return;
+      }
+      console.log('📥 Cache miss — hadis_drawers diload dari Firestore');
+      db.collection('users').doc(currentUser.uid).collection('hadis_drawers').get()
+        .then(function(snap) {
+          allHadisDrawers = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allHadisDrawers.push(x); });
+          _hadisDrawerCache = allHadisDrawers;
+          console.log('📥 Cache miss — hadis_drawers disimpan dalam cache (' + allHadisDrawers.length + ' laci)');
+          cb && cb();
+        }).catch(function(e) {
+          console.error('❌ Gagal load hadis_drawers:', e.message);
+          cb && cb();
+        });
+    }
+
     function loadDoaHadisCollections(cb) {
       if (!currentUser) { cb && cb(); return; }
       var uid = currentUser.uid;
 
+      // Hanya load times (metadata kecil) — drawers load on-demand bila user pilih kategori
       Promise.all([
         db.collection('users').doc(uid).collection('doa_times').get(),
-        db.collection('users').doc(uid).collection('doa_drawers').get(),
-        db.collection('users').doc(uid).collection('hadis_times').get(),
-        db.collection('users').doc(uid).collection('hadis_drawers').get()
+        db.collection('users').doc(uid).collection('hadis_times').get()
       ]).then(function(res) {
         allDoaTimes = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allDoaTimes.push(x); });
 
-        allDoaDrawers = [];
-        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allDoaDrawers.push(x); });
-
         allHadisTimes = [];
-        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allHadisTimes.push(x); });
-
-        allHadisDrawers = [];
-        res[3].forEach(function(d) { var x = d.data(); x.id = d.id; allHadisDrawers.push(x); });
+        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allHadisTimes.push(x); });
 
         collectionsLoaded = true;
+        console.log('📥 doa_times (' + allDoaTimes.length + ') & hadis_times (' + allHadisTimes.length + ') diload. Drawers akan load on-demand.');
         cb && cb();
       }).catch(function(e) {
         setErr('menu-err', 'Gagal load: ' + (e.message || e));
@@ -1051,6 +1105,11 @@
         showScreen('screen-menu');
       } else {
         currentUser = null;
+        _doaDrawerCache = null;
+        _hadisDrawerCache = null;
+        allDoaDrawers = [];
+        allHadisDrawers = [];
+        console.log('🧹 Cache doa & hadis dibersihkan — logout');
         stopAllListeners();
         showScreen('screen-login');
       }
