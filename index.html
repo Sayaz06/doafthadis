@@ -165,6 +165,15 @@
     }
     .btn-row-sm .bsm:active { background: #000; color: #fff; }
     .btn-row-sm .bsm.on { background: #000; color: #fff; }
+    #btn-back-tasbih.terapung {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      flex: none;
+      padding: 10px 16px;
+    }
 
     /* Navigasi laci doa/hadis */
     .laci-nav {
@@ -292,9 +301,6 @@
     <div id="tasbih-err" class="msg error"></div>
     <div id="tasbih-ok"  class="msg ok"></div>
   </div>
-
-  <!-- Button kembali terapung -->
-  <button id="btn-back-float">← Menu</button>
 
   <!-- Reset popup -->
   <div id="reset-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;">
@@ -722,7 +728,7 @@
       setText('laci-counter', '');
       document.getElementById('btn-tap').className = 'mode-tasbih';
       document.getElementById('btn-tap').textContent = 'TAP — ISTIGFAR 5000x';
-      document.getElementById('btn-back-float').className = '';   
+      document.getElementById('btn-back-tasbih').classList.remove('terapung');
       clearMsg('tasbih-err');
       clearMsg('tasbih-ok');
       showScreen('screen-tasbih');
@@ -744,7 +750,7 @@
       document.getElementById('laci-nav').style.display = 'flex';
       document.getElementById('btn-tap').className = 'mode-lain';
       document.getElementById('btn-tap').textContent = 'TAP — ' + (mode === 'doa' ? 'BACA DOA' : 'BACA HADIS');
-      document.getElementById('btn-back-float').className = 'show';
+      document.getElementById('btn-back-tasbih').classList.add('terapung');
       clearMsg('tasbih-err');
       clearMsg('tasbih-ok');
       showScreen('screen-tasbih');
@@ -980,9 +986,6 @@
     /* ══════════════════════════════════════════
        TAP — DECREMENT (tulis ke Firestore → app pertama terima)
     ══════════════════════════════════════════ */
-    document.getElementById('btn-back-float').addEventListener('click', function() {
-      showScreen('screen-menu');
-    });
 
     document.getElementById('btn-tap').addEventListener('click', function() {    
       doTap();
