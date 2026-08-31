@@ -138,6 +138,26 @@
     .btn-row-sm {
       display: flex; gap: 4px; margin: 4px 0;
     }
+
+    /* Button kembali terapung untuk page doa/hadis */
+    #btn-back-float {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 999;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    #btn-back-float.show { display: block; }
+    #btn-back-float:active { background: #000; color: #fff; }
     .btn-row-sm .bsm {
       flex: 1; padding: 9px 2px; font-size: 0.78rem; font-weight: bold;
       text-align: center; border: 2px solid #000; background: #fff; color: #000;
@@ -272,6 +292,9 @@
     <div id="tasbih-err" class="msg error"></div>
     <div id="tasbih-ok"  class="msg ok"></div>
   </div>
+
+  <!-- Button kembali terapung -->
+  <button id="btn-back-float">← Menu</button>
 
   <!-- Sync badge -->
   <div id="sync-badge"></div>
@@ -685,7 +708,8 @@
       document.getElementById('laci-nav').style.display   = 'none';
       setText('laci-counter', '');
       document.getElementById('btn-tap').className = 'mode-tasbih';
-      document.getElementById('btn-tap').textContent = 'TAP — ISTIGFAR 5000x';      
+      document.getElementById('btn-tap').textContent = 'TAP — ISTIGFAR 5000x';
+      document.getElementById('btn-back-float').className = '';   
       clearMsg('tasbih-err');
       clearMsg('tasbih-ok');
       showScreen('screen-tasbih');
@@ -707,6 +731,7 @@
       document.getElementById('laci-nav').style.display = 'flex';
       document.getElementById('btn-tap').className = 'mode-lain';
       document.getElementById('btn-tap').textContent = 'TAP — ' + (mode === 'doa' ? 'BACA DOA' : 'BACA HADIS');
+      document.getElementById('btn-back-float').className = 'show';
       clearMsg('tasbih-err');
       clearMsg('tasbih-ok');
       showScreen('screen-tasbih');
@@ -942,7 +967,11 @@
     /* ══════════════════════════════════════════
        TAP — DECREMENT (tulis ke Firestore → app pertama terima)
     ══════════════════════════════════════════ */
-    document.getElementById('btn-tap').addEventListener('click', function() {
+    document.getElementById('btn-back-float').addEventListener('click', function() {
+      showScreen('screen-menu');
+    });
+
+    document.getElementById('btn-tap').addEventListener('click', function() {    
       doTap();
     });
 
