@@ -296,6 +296,19 @@
   <!-- Button kembali terapung -->
   <button id="btn-back-float">← Menu</button>
 
+  <!-- Reset popup -->
+  <div id="reset-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:3px solid #000;border-radius:10px;padding:20px;width:85%;max-width:320px;text-align:center;">
+      <div style="font-size:0.9rem;font-weight:bold;margin-bottom:10px;">Taip "reset" untuk confirm:</div>
+      <input id="reset-input" type="text" placeholder="reset" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;text-align:center;box-sizing:border-box;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button id="btn-reset-cancel" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Batal</button>
+        <button id="btn-reset-ok" style="flex:1;padding:10px;border:2px solid #c00;background:#c00;color:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Reset</button>
+      </div>
+      <div id="reset-err" style="color:#c00;font-size:0.78rem;margin-top:8px;min-height:1em;"></div>
+    </div>
+  </div>
+
   <!-- Sync badge -->
   <div id="sync-badge"></div>
 
@@ -1061,24 +1074,7 @@
     /* ══════════════════════════════════════════
        RESET COUNTDOWN
     ══════════════════════════════════════════ */
-    document.getElementById('btn-reset-confirm').addEventListener('click', function() {
-      if (!resetPending) {
-        resetPending = true;
-        this.textContent = 'Tekan lagi utk reset';
-        this.style.color = '#c00';
-        var self = this;
-        setTimeout(function() {
-          resetPending = false;
-          self.textContent = 'Reset';
-          self.style.color = '';
-        }, 3000);
-        return;
-      }
-
-      resetPending = false;
-      this.textContent = 'Reset';
-      this.style.color = '';
-
+    function doReset() {
       if (!currentUser) return;
       var coll = currentMode === 'tasbih' ? 'tasbih'
                : currentMode === 'doa'    ? 'doa_tasbih'
@@ -1088,7 +1084,6 @@
                  : MODE_DAILY_DEFAULTS.hadis;
       var key = todayKey();
       var uid = currentUser.uid;
-
       db.collection('users').doc(uid).collection(coll).doc(key)
         .set({ remaining: target, done: false, updatedAt: Date.now() }, { merge: true })
         .then(function() {
@@ -1098,6 +1093,32 @@
         .catch(function(e) {
           setErr('tasbih-err', 'Gagal reset: ' + (e.message || e));
         });
+    }
+
+    document.getElementById('btn-reset-confirm').addEventListener('click', function() {
+      // Tunjuk popup — user kena taip "reset"
+      document.getElementById('reset-input').value = '';
+      document.getElementById('reset-err').textContent = '';
+      document.getElementById('reset-overlay').style.display = 'flex';
+      setTimeout(function() { document.getElementById('reset-input').focus(); }, 100);
+    });
+
+    document.getElementById('btn-reset-cancel').addEventListener('click', function() {
+      document.getElementById('reset-overlay').style.display = 'none';
+    });
+
+    document.getElementById('btn-reset-ok').addEventListener('click', function() {
+      var val = document.getElementById('reset-input').value.trim().toLowerCase();
+      if (val !== 'reset') {
+        document.getElementById('reset-err').textContent = 'Taip "reset" untuk confirm.';
+        return;
+      }
+      document.getElementById('reset-overlay').style.display = 'none';
+      doReset();
+    });
+
+    document.getElementById('reset-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('btn-reset-ok').click();
     });
 
     /* ══════════════════════════════════════════
