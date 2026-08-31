@@ -920,12 +920,16 @@
         btnTap.className = 'done-state';
         btnTap.textContent = 'SELESAI ✓';
       } else {
-        btnTap.className = '';
         if (currentMode === 'tasbih') {
+          btnTap.className = 'mode-tasbih';
           btnTap.textContent = rem > 5000 ? 'TAP — ISTIGFAR 5000x' : 'TAP — SELAWAT 5000x';
+        } else if (currentMode === 'doa') {
+          btnTap.className = 'mode-lain';
+          btnTap.textContent = 'TAP — BACA DOA';
+        } else {
+          btnTap.className = 'mode-lain';
+          btnTap.textContent = 'TAP — BACA HADIS';
         }
-        else if (currentMode === 'doa') btnTap.textContent = 'TAP — BACA DOA';
-        else btnTap.textContent = 'TAP — BACA HADIS';
       }
 
       // Masa kemaskini — diupdate setiap 5 countdown sahaja
