@@ -1033,22 +1033,12 @@
        RESET COUNTDOWN
     ══════════════════════════════════════════ */
     document.getElementById('btn-reset-confirm').addEventListener('click', function() {
-      if (!resetPending) {
-        resetPending = true;
-        this.textContent = 'Tekan lagi utk reset';
-        this.style.color = '#c00';
-        var self = this;
-        setTimeout(function() {
-          resetPending = false;
-          self.textContent = 'Reset';
-          self.style.color = '';
-        }, 3000);
+      var jawapan = prompt('Taip "reset" untuk sahkan reset kiraan hari ini:');
+      if (jawapan === null) return; // user tekan Cancel
+      if (jawapan.trim().toLowerCase() !== 'reset') {
+        alert('Salah. Reset dibatalkan.');
         return;
       }
-
-      resetPending = false;
-      this.textContent = 'Reset';
-      this.style.color = '';
 
       if (!currentUser) return;
       var coll = currentMode === 'tasbih' ? 'tasbih'
