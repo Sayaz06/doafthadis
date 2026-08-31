@@ -121,7 +121,7 @@
     /* Butang TAP */
     #btn-tap {
       display: block; width: 100%;
-      padding: 110px 8px; margin: 10px 0 6px;
+      padding: 154px 8px; margin: 10px 0 6px;      
       font-size: 1.4rem; font-weight: bold; text-align: center;
       border: 3px solid #000; background: #000; color: #fff;
       cursor: pointer; border-radius: 8px;
@@ -130,6 +130,8 @@
       user-select: none;
     }
     #btn-tap:active { background: #333; }
+    #btn-tap.mode-lain { padding: 44px 8px; }
+    #btn-tap.mode-tasbih { padding: 154px 8px; }    
     #btn-tap.done-state { background: #fff; color: #000; border-style: dashed; }
 
     /* Row butang kecil bawah */
@@ -682,8 +684,8 @@
       document.getElementById('laci-box').style.display   = 'none';
       document.getElementById('laci-nav').style.display   = 'none';
       setText('laci-counter', '');
-      document.getElementById('btn-tap').className = '';
-      document.getElementById('btn-tap').textContent = 'TAP — ISTIGFAR 5000x';
+      document.getElementById('btn-tap').className = 'mode-tasbih';
+      document.getElementById('btn-tap').textContent = 'TAP — ISTIGFAR 5000x';      
       clearMsg('tasbih-err');
       clearMsg('tasbih-ok');
       showScreen('screen-tasbih');
@@ -703,7 +705,7 @@
 
       document.getElementById('laci-box').style.display = 'block';
       document.getElementById('laci-nav').style.display = 'flex';
-      document.getElementById('btn-tap').className = '';
+      document.getElementById('btn-tap').className = 'mode-lain';
       document.getElementById('btn-tap').textContent = 'TAP — ' + (mode === 'doa' ? 'BACA DOA' : 'BACA HADIS');
       clearMsg('tasbih-err');
       clearMsg('tasbih-ok');
