@@ -521,6 +521,25 @@
             }
           });
 
+          // LOG — tunjuk beza masa antara doc dari from sama
+          var logGroups = {};
+          raw.forEach(function(d) {
+            var k = d.fromKey || d.from;
+            if (!logGroups[k]) logGroups[k] = [];
+            logGroups[k].push(d.ts);
+          });
+          Object.keys(logGroups).forEach(function(k) {
+            var tsList = logGroups[k].sort(function(a,b){ return b-a; });
+            if (tsList.length > 1) {
+              for (var i = 0; i < tsList.length - 1; i++) {
+                var beza = tsList[i] - tsList[i+1];
+                console.log('[wsNotif] from="' + k + '" doc'+(i+1)+' vs doc'+(i+2)+' beza: ' + beza + 'ms');
+              }
+            } else {
+              console.log('[wsNotif] from="' + k + '" — hanya 1 doc, tiada duplicate');
+            }
+          });
+
           updateWsNotifBadge();
         }, function(e) { console.warn('wsNotif error:', e); });
     }
