@@ -515,9 +515,9 @@
               if (diff > 500) {
                 // Beza lebih 500ms — ini mesej berlainan, masuk
                 _wsNotifDocs.push(d);
-                seen[key] = d.ts;
               }
-              // Beza kurang 500ms — buang (sticker duplicate)
+              // Kemas kini seen walaupun dibuang — supaya ref ts sentiasa terkini
+              seen[key] = d.ts;
             }
           });
 
