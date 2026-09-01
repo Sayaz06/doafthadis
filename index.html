@@ -512,8 +512,8 @@
               _wsNotifDocs.push(d);
             } else {
               var diff = Math.abs(seen[key] - d.ts);
-              if (diff > 3000) {
-                // Beza lebih 500ms — ini mesej berlainan, masuk
+              if (diff > 5000) {
+                // Beza lebih 5000ms — ini mesej berlainan, masuk
                 _wsNotifDocs.push(d);
               }
               // Kemas kini seen walaupun dibuang — supaya ref ts sentiasa terkini
