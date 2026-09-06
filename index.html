@@ -1859,6 +1859,14 @@
         var now = new Date();
         var nowMs = now.getTime();
 
+        // Detect tempoh 12am-Subuh
+        var subuhHariIniMs = 0;
+        if (waktu['Subuh']) {
+          var subuhParts = waktu['Subuh'].split(':');
+          subuhHariIniMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(subuhParts[0]), parseInt(subuhParts[1]), 0).getTime();
+        }
+        var lepasTenahMalam = subuhHariIniMs > 0 && nowMs < subuhHariIniMs;
+
         var waktuList = [];
         waktuSolat.forEach(function(nama) {
           var jamStr = waktu[nama];
@@ -1866,6 +1874,9 @@
           var parts = jamStr.split(':');
           var h = parseInt(parts[0]); var m = parseInt(parts[1]);
           var waktuMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0).getTime();
+          if (lepasTenahMalam && waktuMs > nowMs && nama !== 'Subuh') {
+            waktuMs = waktuMs - 24 * 60 * 60 * 1000;
+          }
           waktuList.push({ nama: nama, jamStr: jamStr, waktuMs: waktuMs });
         });
         if (waktu['Subuh']) {
@@ -1943,6 +1954,11 @@
       }
 
       function triggerLock(fasa, namaWaktu, jamStr, lokasiNama) {
+        var lockEl = elAzan('azan-lock');
+        if (lockEl && lockEl.classList.contains('active')) {
+          var namaAktif = elAzan('azan-waktu-nama') ? elAzan('azan-waktu-nama').textContent : '';
+          if (namaAktif === namaWaktu && _azanFasa === fasa) return;
+        }
         _azanFasa = fasa;
         elAzan('azan-waktu-nama').textContent = namaWaktu;
         elAzan('azan-waktu-jam').textContent = jamStr;
